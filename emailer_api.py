@@ -12,16 +12,12 @@ mailer = boto3.client('ses', region_name=AWS_REGION)
 
 def lambda_handler(event, context):
     try:
-        print(str(event))
-        recipient_email = get_value(event, "email_address")
-        print(recipient_email)
-        
-        recipient_name = get_value(event, "first_name")
-        print(recipient_name)
-        
+        message = get_message(event)
+        recipient_email = message["email_address"]
+        recipient_name = message["first_name"]
+
         mailed_response = send_it(recipient_email, recipient_name)
-        print(str(mailed_response))
-        
+
         return {
             'statusCode': 200,
             'body': json.dumps("Email sent! Message ID: " + mailed_response['MessageId'])
@@ -31,7 +27,7 @@ def lambda_handler(event, context):
         print(str(e))
         return {
             'statusCode': 500,
-            'body': "1 " + json.dumps(str(e))
+            'body': json.dumps(str(type(e).__name__) + ": " + str(e))
         }
 
 def send_it(recipient, name):
@@ -63,23 +59,34 @@ def send_it(recipient, name):
 
     except ClientError as e:
         return {
-            'statusCode': 500,
+            'statusCode': 400,
             'body': json.dumps(e.response['Error']['Message'])
         }
-    
-def get_value(event, key):
-    try:
-        message = json.loads(event['Records'][0]['Sns']['Message'])
-        value = message[key]
-        return value
-        
-    except Exception as e:
-        raise e
 
 def get_body(name):
     body = (f"Thank you {name} for your enquiry\r\n"
          "A member of our team will call you within the next few days."
         )
-    
     return body
+
+def get_message(event):
+    # determine whether incoming data is from SNS or public API endpoint
+    for k, v in event.items():
+        if k == "Records": 
+            try:
+                message = json.loads(event['Records'][0]['Sns']['Message'])
+            except Exception as e:
+                raise e
+        else:
+            # data is not coming from SNS
+            try:
+                # convert string json to json object
+                message = json.loads(event)
+            except TypeError:
+                # if data is not a string, assume it is already json
+                message = event
+            except Exception as e:
+                raise e
+    return message
+    
     
