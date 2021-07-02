@@ -1,15 +1,15 @@
-""" odip Requests
+""" Emailer Requests
 """
 
 import json
 from requests import post, get
 
-# oDip Endpoint
-BASE_URL = "http://ec2-18-168-225-13.eu-west-2.compute.amazonaws.com"
+# Emailer Endpoint
+BASE_URL = "https://a4j7i493vh.execute-api.eu-west-2.amazonaws.com/dev"
 
 # CREATE a new enquiry
 data = {
-    "first_name": "vs_oDip_API1",
+    "first_name": "vs_Emailer_API1",
     "last_name": "Smith",
     "building": "11",
     "street": "Indigo Avenue",
@@ -26,14 +26,6 @@ data = {
     "ltv_value": "5"
 }
 
-response = get(BASE_URL)
-print("GET Healthcheck... (/)")
-print("Response: " + response.text)
-
-response = get(BASE_URL + "/log")
-print("GET Log... (/log)")
-print("Response: " + response.text)
-
-response = post(BASE_URL + "/send-enquiry", json = data)
-print("POST New Enquiry... (/send-enquiry)")
+response = post(BASE_URL + "/send", json = data)
+print("POST New Enquiry... (/send)")
 print("Response: " + response.text)
