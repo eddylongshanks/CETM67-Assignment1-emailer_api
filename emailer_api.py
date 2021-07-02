@@ -18,17 +18,16 @@ def lambda_handler(event, context):
 
         mailed_response = send_it(recipient_email, recipient_name)
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps("Email sent! Message ID: " + mailed_response['MessageId'])
-        }
-        
+        response_message = "Email sent! Message ID: " + mailed_response['MessageId']
+        return response_object(200, response_message)
+    
+    except KeyError as ke:
+        response_message = "Required data missing: " + str(ke)
+        return response_object(400, response_message)
+
     except Exception as e:
-        print(str(e))
-        return {
-            'statusCode': 500,
-            'body': json.dumps(str(type(e).__name__) + ": " + str(e))
-        }
+        response_message = str(type(e).__name__) + ": " + str(e)
+        return response_object(500, response_message)        
 
 def send_it(recipient, name):
     try:
@@ -58,10 +57,8 @@ def send_it(recipient, name):
         return response
 
     except ClientError as e:
-        return {
-            'statusCode': 400,
-            'body': json.dumps(e.response['Error']['Message'])
-        }
+        response_message = json.dumps(e.response['Error']['Message'])
+        return response_object(400, response_message)
 
 def get_body(name):
     body = (f"Thank you {name} for your enquiry\r\n"
@@ -89,4 +86,9 @@ def get_message(event):
                 raise e
     return message
     
-    
+def response_object(status_code, message):
+    # encapsulates the return object
+    return {
+        'statusCode': status_code,
+        'body': message
+    }
